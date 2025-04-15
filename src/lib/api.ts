@@ -4,7 +4,9 @@ import {
   dummyComponentScores, 
   dummyTotalScores, 
   dummyPrediction, 
-  dummyInstructorCourses 
+  dummyInstructorCourses,
+  dummyStudentsInCourse,
+  dummyStudentDetails
 } from './dummy-data';
 
 const API_BASE_URL = 'http://localhost:5000';
@@ -39,6 +41,18 @@ export const fetchInstructorCourses = async (instructorId: string) => {
   console.log(`Fetching courses for instructor ${instructorId}`);
   // Return dummy data instead of making an API call
   return dummyInstructorCourses;
+};
+
+export const fetchStudentsInCourse = async (instructorId: string, courseCode: string) => {
+  console.log(`Fetching students in course ${courseCode} for instructor ${instructorId}`);
+  // Return dummy data instead of making an API call
+  return dummyStudentsInCourse[courseCode as keyof typeof dummyStudentsInCourse] || [];
+};
+
+export const fetchStudentDetails = async (rollNumber: string) => {
+  console.log(`Fetching details for student ${rollNumber}`);
+  // Return dummy data instead of making an API call
+  return dummyStudentDetails[rollNumber as keyof typeof dummyStudentDetails] || {};
 };
 
 export const assignGrade = async (instructorId: string, data: { roll_number: string; course_code: string; grade: number }) => {

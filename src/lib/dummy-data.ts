@@ -70,3 +70,47 @@ export const dummyInstructorCourses = [
   { CourseCode: "CS201", Name: "Data Structures and Algorithms" },
   { CourseCode: "CS301", Name: "Database Systems" }
 ];
+
+// Dummy students in a course (for instructor view)
+export const dummyStudentsInCourse = {
+  "CS101": [
+    { RollNumber: "CS2021001", Name: "Alex Johnson", CurrentGrade: 8.7 },
+    { RollNumber: "CS2021002", Name: "Emma Williams", CurrentGrade: 9.3 },
+    { RollNumber: "CS2021003", Name: "Michael Brown", CurrentGrade: 7.8 },
+    { RollNumber: "CS2021004", Name: "Sophia Davis", CurrentGrade: 8.2 },
+    { RollNumber: "CS2021005", Name: "Daniel Wilson", CurrentGrade: 6.5 }
+  ],
+  "CS201": [
+    { RollNumber: "CS2020001", Name: "Olivia Martinez", CurrentGrade: 8.9 },
+    { RollNumber: "CS2020002", Name: "James Taylor", CurrentGrade: 7.6 },
+    { RollNumber: "CS2020003", Name: "Ava Anderson", CurrentGrade: 9.1 },
+    { RollNumber: "CS2020004", Name: "Ethan Thomas", CurrentGrade: 8.4 }
+  ],
+  "CS301": [
+    { RollNumber: "CS2019001", Name: "Isabella Jackson", CurrentGrade: 9.4 },
+    { RollNumber: "CS2019002", Name: "Noah White", CurrentGrade: 8.8 },
+    { RollNumber: "CS2019003", Name: "Mia Harris", CurrentGrade: 7.9 },
+    { RollNumber: "CS2019004", Name: "Liam Martin", CurrentGrade: 8.5 },
+    { RollNumber: "CS2019005", Name: "Charlotte Thompson", CurrentGrade: 9.2 },
+    { RollNumber: "CS2019006", Name: "Lucas Garcia", CurrentGrade: 6.8 }
+  ]
+};
+
+// Dummy student detail data for instructor view
+export const dummyStudentDetails = {
+  "CS2021001": {
+    Name: "Alex Johnson",
+    Email: "alex.johnson@university.edu",
+    Program: "Computer Science",
+    Year: 3,
+    EnrollmentDate: "2021-08-15"
+  },
+  "CS2021002": {
+    Name: "Emma Williams",
+    Email: "emma.williams@university.edu",
+    Program: "Computer Science",
+    Year: 3,
+    EnrollmentDate: "2021-08-10"
+  }
+  // Additional student details would be here in a real implementation
+};
