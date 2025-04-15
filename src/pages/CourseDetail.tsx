@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,7 +22,6 @@ interface TotalScore {
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
   const navigate = useNavigate();
-  
   const [rollNumber, setRollNumber] = useState<string>("");
   const [courseData, setCourseData] = useState<{ name: string; instructor: string } | null>(null);
   const [scores, setScores] = useState<ComponentScore[]>([]);
@@ -37,28 +35,24 @@ const CourseDetail = () => {
       navigate("/");
       return;
     }
-    
     setRollNumber(storedRollNumber);
-    
-    // Get course data from localStorage if available
+
     const courses = JSON.parse(localStorage.getItem("courses") || "[]");
     const course = courses.find((c: any) => c.CourseCode === courseCode);
     if (course) {
       setCourseData({
         name: course.Name,
-        instructor: course.Instructor
+        instructor: course.Instructor,
       });
     }
-    
+
     const loadCourseData = async () => {
       try {
         setLoading(true);
-        
         const [scoresData, totalScoreData] = await Promise.all([
           fetchComponentScores(storedRollNumber, courseCode),
-          fetchTotalScore(storedRollNumber, courseCode)
+          fetchTotalScore(storedRollNumber, courseCode),
         ]);
-        
         setScores(scoresData);
         setTotalScore(totalScoreData);
       } catch (err) {
@@ -68,42 +62,37 @@ const CourseDetail = () => {
         setLoading(false);
       }
     };
-    
+
     loadCourseData();
   }, [courseCode, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header rollNumber={rollNumber} />
-      
       <main className="flex-1 container mx-auto px-4 py-8">
-        <CourseHeader 
-          courseCode={courseCode || ""} 
-          courseName={courseData?.name} 
+        <CourseHeader
+          courseCode={courseCode || ""}
+          courseName={courseData?.name}
           instructor={courseData?.instructor}
         />
-        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div></div> {/* Empty div to maintain layout */}
+          <div></div>
           <CourseScoreDisplay totalScore={totalScore} />
         </div>
-        
         <Tabs defaultValue="scores" className="space-y-6">
           <TabsList>
             <TabsTrigger value="scores">Component Scores</TabsTrigger>
             <TabsTrigger value="predict">Grade Prediction</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="scores">
-            <CourseScoreTab 
+            <CourseScoreTab
               loading={loading}
               error={error}
               scores={scores}
             />
           </TabsContent>
-          
           <TabsContent value="predict">
-            <CoursePredictionTab 
+            <CoursePredictionTab
               loading={loading}
               rollNumber={rollNumber}
               courseCode={courseCode || ""}
@@ -111,10 +100,9 @@ const CourseDetail = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
       <footer className="bg-white border-t border-gray-200 py-4">
         <div className="container mx-auto px-4 text-center text-gray-500">
-          <p>&copy; {new Date().getFullYear()} CourseCompass. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} CourseCompass. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchComponentScores, fetchTotalScore, assignGrade, updateComponentScores } from "@/lib/api";
+import { fetchComponentScores, fetchTotalScore, updateComponentScores } from "@/lib/api";
 import Header from "@/components/Header";
 import CourseScoreDisplay from "@/components/CourseScoreDisplay";
 import { ArrowLeft, Save, PenLine } from "lucide-react";
@@ -60,10 +59,8 @@ const InstructorStudentGrade = () => {
           fetchComponentScores(rollNumber, courseCode),
           fetchTotalScore(rollNumber, courseCode)
         ]);
-        
         setComponents(componentsData);
         setTotalScore(totalScoreData);
-        
         form.setValue("componentScores", componentsData);
       } catch (err) {
         setError("Failed to load student grade data");
@@ -82,39 +79,24 @@ const InstructorStudentGrade = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!instructorId || !rollNumber || !courseCode) return;
-    
     setSubmitting(true);
     try {
-      // Fix: Ensure we cast the data to match the required ComponentScore type
       const updatedComponentScores: ComponentScore[] = values.componentScores.map(comp => ({
         ComponentName: comp.ComponentName,
         Percentage: comp.Percentage,
         Score: comp.Score
       }));
-      
-      let newTotalScore = 0;
-      
-      updatedComponentScores.forEach(comp => {
-        newTotalScore += (comp.Score * comp.Percentage) / 100;
+      await updateComponentScores(instructorId, {
+        roll_number: rollNumber,
+        course_code: courseCode,
+        component_scores: updatedComponentScores
       });
-      
-      // Update the API (in a real application)
-      if (instructorId && rollNumber && courseCode) {
-        await updateComponentScores(instructorId, {
-          roll_number: rollNumber,
-          course_code: courseCode,
-          component_scores: updatedComponentScores
-        });
-      }
-      
       setComponents(updatedComponentScores);
-      
-      setTotalScore(prev => ({ ...prev, total_score: newTotalScore }));
-      
+      const newTotalScore = await fetchTotalScore(rollNumber, courseCode);
+      setTotalScore(newTotalScore);
       toast({
         title: "Scores Updated",
         description: `Successfully updated component scores for student ${rollNumber}`,
-        variant: "default"
       });
     } catch (err) {
       toast({
@@ -128,21 +110,18 @@ const InstructorStudentGrade = () => {
     }
   };
 
-  // ... keep existing code (render method with UI components)
   return (
     <div className="min-h-screen bg-gray-50">
       <Header rollNumber={instructorId} />
-      
       <main className="container mx-auto py-6 px-4">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="mb-4 hover:bg-gray-200"
           onClick={handleGoBack}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Course
         </Button>
-        
         <div className="grid grid-cols-1 gap-6">
           <Card>
             <CardHeader>
@@ -164,7 +143,6 @@ const InstructorStudentGrade = () => {
                     <h3 className="text-lg font-medium mb-4">Current Totals</h3>
                     <CourseScoreDisplay totalScore={totalScore} />
                   </div>
-                  
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="border-t pt-6">
@@ -175,7 +153,6 @@ const InstructorStudentGrade = () => {
                         <p className="text-sm text-gray-500 mb-4">
                           Update the scores for each assessment component. The final grade will be calculated automatically.
                         </p>
-                        
                         <div className="space-y-4">
                           {components.map((component, index) => (
                             <FormField
@@ -215,7 +192,6 @@ const InstructorStudentGrade = () => {
                           ))}
                         </div>
                       </div>
-                      
                       <Button type="submit" className="w-full" disabled={submitting}>
                         {submitting ? "Saving..." : "Save Component Scores"}
                         <Save className="ml-2 h-4 w-4" />

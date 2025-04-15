@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
-import { predictRequiredMarks } from "@/lib/api";
+import { fetchPrediction } from "@/lib/api";
 
 interface PredictionCalculatorProps {
   rollNumber: string;
@@ -31,7 +30,7 @@ const PredictionCalculator = ({ rollNumber, courseCode }: PredictionCalculatorPr
     try {
       setLoading(true);
       setError(null);
-      const data = await predictRequiredMarks(rollNumber, courseCode, targetGrade);
+      const data = await fetchPrediction(rollNumber, courseCode, targetGrade);
       setResult(data);
     } catch (err) {
       setError("Failed to calculate prediction. Please try again.");

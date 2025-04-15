@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,20 +35,24 @@ const InstructorCourseDetail = () => {
       return;
     }
 
-    const loadStudents = async () => {
+    const loadData = async () => {
       try {
-        const data = await fetchStudentsInCourse(instructorId, courseCode);
-        setStudents(data);
-        setFilteredStudents(data);
+        const [studentsData, schemeData] = await Promise.all([
+          fetchStudentsInCourse(instructorId, courseCode),
+          fetch(`/instructors/${instructorId}/courses/${courseCode}/grading_scheme`).then(res => res.json())
+        ]);
+        setStudents(studentsData);
+        setFilteredStudents(studentsData);
+        setGradingScheme(schemeData.grading_scheme);
       } catch (err) {
-        setError("Failed to load students in course");
+        setError("Failed to load data");
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadStudents();
+    loadData();
   }, [instructorId, courseCode, navigate]);
 
   useEffect(() => {
@@ -58,41 +61,84 @@ const InstructorCourseDetail = () => {
     } else {
       const query = searchQuery.toLowerCase();
       const filtered = students.filter(
-        student => 
-          student.Name.toLowerCase().includes(query) || 
+        student =>
+          student.Name.toLowerCase().includes(query) ||
           student.RollNumber.toLowerCase().includes(query)
       );
       setFilteredStudents(filtered);
     }
   }, [searchQuery, students]);
 
-  const handleGradingSchemeChange = (value: 'linear' | 'gaussian') => {
-    setGradingScheme(value);
-    toast({
-      title: "Grading Scheme Updated",
-      description: `Course ${courseCode} will now use ${value} grading.`,
-    });
+  const handleGradingSchemeChange = async (value: 'linear' | 'gaussian') => {
+    try {
+      const response = await fetch(`/instructors/${instructorId}/courses/${courseCode}/grading_scheme`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grading_scheme: value }),
+      });
+      if (!response.ok) throw new Error("Failed to update grading scheme");
+      setGradingScheme(value);
+      toast({
+        title: "Grading Scheme Updated",
+        description: `Course ${courseCode} will now use ${value} grading.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to update grading scheme",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAssignGrades = async () => {
+    try {
+      const response = await fetch(`/instructors/${instructorId}/courses/${courseCode}/assign_grades`, {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("Failed to assign grades");
+      const updatedStudents = await fetchStudentsInCourse(instructorId, courseCode!);
+      setStudents(updatedStudents);
+      setFilteredStudents(updatedStudents);
+      toast({
+        title: "Grades Assigned",
+        description: `Grades have been assigned using ${gradingScheme} grading.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to assign grades",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-edu-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
       <Header rollNumber={instructorId} />
-      
       <main className="container mx-auto py-6 px-4">
-        <Button 
-          variant="ghost" 
-          className="mb-4 hover:bg-edu-blue-50 hover:text-edu-blue-600"
-          onClick={() => navigate("/instructor/dashboard")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Button>
-        
-        <Card className="mb-6 border-edu-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+          <Button
+            variant="ghost"
+            className="hover:bg-gray-200"
+            onClick={() => navigate("/instructor/dashboard")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button
+            variant="default"
+            onClick={handleAssignGrades}
+            disabled={loading}
+          >
+            Assign Grades
+          </Button>
+        </div>
+        <Card className="mb-6">
           <CardHeader className="space-y-4">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
-                <GraduationCap className="mr-2 h-6 w-6 text-edu-blue-500" />
+                <GraduationCap className="mr-2 h-6 w-6 text-blue-500" />
                 Course: {courseCode}
               </CardTitle>
               <Select value={gradingScheme} onValueChange={handleGradingSchemeChange}>
@@ -117,7 +163,7 @@ const InstructorCourseDetail = () => {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="h-48 rounded-lg bg-edu-gray-100 animate-pulse"></div>
+              <div className="h-48 rounded-lg bg-gray-100 animate-pulse"></div>
             ) : error ? (
               <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">
                 {error}
@@ -125,7 +171,7 @@ const InstructorCourseDetail = () => {
             ) : filteredStudents.length > 0 ? (
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-edu-gray-50">
+                  <TableRow className="bg-gray-50">
                     <TableHead>Roll Number</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Current Grade</TableHead>
@@ -134,20 +180,20 @@ const InstructorCourseDetail = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.map((student) => (
-                    <TableRow key={student.RollNumber} className="hover:bg-edu-blue-50/50">
+                    <TableRow key={student.RollNumber} className="hover:bg-blue-50/50">
                       <TableCell className="font-medium">{student.RollNumber}</TableCell>
                       <TableCell>{student.Name}</TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-edu-purple-50 text-edu-purple-500">
-                          {student.CurrentGrade.toFixed(1)}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-purple-50 text-purple-500">
+                          {student.CurrentGrade ? student.CurrentGrade.toFixed(1) : "N/A"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => navigate(`/instructor/students/${student.RollNumber}/${courseCode}`)}
-                          className="hover:bg-edu-blue-50 hover:text-edu-blue-600"
+                          className="hover:bg-blue-50 hover:text-blue-600"
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Grade
@@ -158,10 +204,10 @@ const InstructorCourseDetail = () => {
                 </TableBody>
               </Table>
             ) : (
-              <EmptyState 
-                title="No students found" 
+              <EmptyState
+                title="No students found"
                 description="No students are enrolled in this course yet, or your search returned no results."
-                icon="users" 
+                icon="users"
               />
             )}
           </CardContent>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +19,6 @@ const InstructorDashboard = () => {
   const instructorId = localStorage.getItem("instructorId");
 
   useEffect(() => {
-    // Redirect to login if instructor ID is not present
     if (!instructorId) {
       navigate("/");
       return;
@@ -48,13 +46,11 @@ const InstructorDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header rollNumber={instructorId} />
-      
       <main className="container mx-auto py-6 px-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Instructor Dashboard</h1>
           <p className="text-gray-500">Manage your courses and student grades</p>
         </div>
-        
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
@@ -68,8 +64,8 @@ const InstructorDashboard = () => {
         ) : courses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {courses.map((course) => (
-              <Card 
-                key={course.CourseCode} 
+              <Card
+                key={course.CourseCode}
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => handleCourseClick(course.CourseCode)}
               >
@@ -87,10 +83,10 @@ const InstructorDashboard = () => {
             ))}
           </div>
         ) : (
-          <EmptyState 
-            title="No courses found" 
+          <EmptyState
+            title="No courses found"
             description="You are not assigned to any courses yet."
-            icon="school" 
+            icon="school"
           />
         )}
       </main>

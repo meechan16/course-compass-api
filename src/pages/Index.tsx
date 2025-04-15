@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,26 +16,20 @@ const Index = () => {
 
   const handleStudentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!rollNumber.trim()) {
       setError("Please enter your roll number");
       return;
     }
-    
-    // Store roll number in localStorage and navigate to dashboard
     localStorage.setItem("rollNumber", rollNumber);
     navigate("/dashboard");
   };
 
   const handleInstructorSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!instructorId.trim()) {
       setError("Please enter your instructor ID");
       return;
     }
-    
-    // Store instructor ID in localStorage and navigate to instructor dashboard
     localStorage.setItem("instructorId", instructorId);
     navigate("/instructor/dashboard");
   };
@@ -50,19 +43,16 @@ const Index = () => {
         <h1 className="text-3xl font-bold">CourseCompass</h1>
         <p className="text-gray-500 mt-2">Track academic progress and manage grades</p>
       </div>
-      
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Login</CardTitle>
           <CardDescription>Enter your credentials to continue</CardDescription>
         </CardHeader>
-        
         <Tabs defaultValue="student" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="student">Student</TabsTrigger>
             <TabsTrigger value="instructor">Instructor</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="student">
             <form onSubmit={handleStudentSubmit}>
               <CardContent>
@@ -84,7 +74,6 @@ const Index = () => {
               </CardFooter>
             </form>
           </TabsContent>
-          
           <TabsContent value="instructor">
             <form onSubmit={handleInstructorSubmit}>
               <CardContent>
@@ -108,7 +97,6 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </Card>
-      
       <div className="mt-8 text-center text-gray-500 text-sm">
         <p>For testing, use any roll number (e.g., CS2021001) or instructor ID (e.g., PROF001)</p>
       </div>
