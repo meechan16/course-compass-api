@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchComponentScores, fetchTotalScore, assignGrade } from "@/lib/api";
+import { fetchComponentScores, fetchTotalScore, assignGrade, updateComponentScores } from "@/lib/api";
 import Header from "@/components/Header";
 import CourseScoreDisplay from "@/components/CourseScoreDisplay";
 import { ArrowLeft, Save, PenLine } from "lucide-react";
@@ -84,12 +85,27 @@ const InstructorStudentGrade = () => {
     
     setSubmitting(true);
     try {
-      const updatedComponentScores = values.componentScores;
+      // Fix: Ensure we cast the data to match the required ComponentScore type
+      const updatedComponentScores: ComponentScore[] = values.componentScores.map(comp => ({
+        ComponentName: comp.ComponentName,
+        Percentage: comp.Percentage,
+        Score: comp.Score
+      }));
+      
       let newTotalScore = 0;
       
       updatedComponentScores.forEach(comp => {
         newTotalScore += (comp.Score * comp.Percentage) / 100;
       });
+      
+      // Update the API (in a real application)
+      if (instructorId && rollNumber && courseCode) {
+        await updateComponentScores(instructorId, {
+          roll_number: rollNumber,
+          course_code: courseCode,
+          component_scores: updatedComponentScores
+        });
+      }
       
       setComponents(updatedComponentScores);
       
@@ -112,6 +128,7 @@ const InstructorStudentGrade = () => {
     }
   };
 
+  // ... keep existing code (render method with UI components)
   return (
     <div className="min-h-screen bg-gray-50">
       <Header rollNumber={instructorId} />

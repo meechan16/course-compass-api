@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchStudentsInCourse } from "@/lib/api";
+import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
 import EmptyState from "@/components/EmptyState";
-import { ArrowLeft, Search, Edit } from "lucide-react";
+import { ArrowLeft, Search, Edit, GraduationCap } from "lucide-react";
 
 interface Student {
   RollNumber: string;
@@ -21,13 +23,14 @@ const InstructorCourseDetail = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [gradingScheme, setGradingScheme] = useState<'linear' | 'gaussian'>('linear');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { toast } = useToast();
   const instructorId = localStorage.getItem("instructorId");
 
   useEffect(() => {
-    // Redirect to login if instructor ID is not present
     if (!instructorId || !courseCode) {
       navigate("/");
       return;
@@ -49,7 +52,6 @@ const InstructorCourseDetail = () => {
     loadStudents();
   }, [instructorId, courseCode, navigate]);
 
-  // Filter students based on search query
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredStudents(students);
@@ -64,34 +66,46 @@ const InstructorCourseDetail = () => {
     }
   }, [searchQuery, students]);
 
-  const handleGoBack = () => {
-    navigate("/instructor/dashboard");
-  };
-
-  const handleEditStudent = (rollNumber: string) => {
-    navigate(`/instructor/students/${rollNumber}/${courseCode}`);
+  const handleGradingSchemeChange = (value: 'linear' | 'gaussian') => {
+    setGradingScheme(value);
+    toast({
+      title: "Grading Scheme Updated",
+      description: `Course ${courseCode} will now use ${value} grading.`,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-white to-edu-gray-50">
       <Header rollNumber={instructorId} />
       
       <main className="container mx-auto py-6 px-4">
         <Button 
           variant="ghost" 
-          className="mb-4 hover:bg-gray-200"
-          onClick={handleGoBack}
+          className="mb-4 hover:bg-edu-blue-50 hover:text-edu-blue-600"
+          onClick={() => navigate("/instructor/dashboard")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </Button>
         
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Course: {courseCode}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center mb-4">
+        <Card className="mb-6 border-edu-gray-200">
+          <CardHeader className="space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <GraduationCap className="mr-2 h-6 w-6 text-edu-blue-500" />
+                Course: {courseCode}
+              </CardTitle>
+              <Select value={gradingScheme} onValueChange={handleGradingSchemeChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select grading scheme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="linear">Linear Grading</SelectItem>
+                  <SelectItem value="gaussian">Gaussian Grading</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center">
               <Search className="mr-2 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="Search students by name or roll number"
@@ -100,9 +114,10 @@ const InstructorCourseDetail = () => {
                 className="max-w-sm"
               />
             </div>
-            
+          </CardHeader>
+          <CardContent>
             {loading ? (
-              <div className="h-48 rounded-lg bg-gray-200 animate-pulse"></div>
+              <div className="h-48 rounded-lg bg-edu-gray-100 animate-pulse"></div>
             ) : error ? (
               <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">
                 {error}
@@ -110,7 +125,7 @@ const InstructorCourseDetail = () => {
             ) : filteredStudents.length > 0 ? (
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-edu-gray-50">
                     <TableHead>Roll Number</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Current Grade</TableHead>
@@ -119,15 +134,20 @@ const InstructorCourseDetail = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.map((student) => (
-                    <TableRow key={student.RollNumber}>
-                      <TableCell>{student.RollNumber}</TableCell>
+                    <TableRow key={student.RollNumber} className="hover:bg-edu-blue-50/50">
+                      <TableCell className="font-medium">{student.RollNumber}</TableCell>
                       <TableCell>{student.Name}</TableCell>
-                      <TableCell>{student.CurrentGrade.toFixed(1)}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-edu-purple-50 text-edu-purple-500">
+                          {student.CurrentGrade.toFixed(1)}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => handleEditStudent(student.RollNumber)}
+                          onClick={() => navigate(`/instructor/students/${student.RollNumber}/${courseCode}`)}
+                          className="hover:bg-edu-blue-50 hover:text-edu-blue-600"
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Grade
