@@ -26,17 +26,23 @@ const Dashboard = () => {
   useEffect(() => {
     const storedRollNumber = localStorage.getItem("rollNumber");
     if (!storedRollNumber) {
-      navigate("/");
-      return;
+      // For demo purposes, set a default roll number
+      const defaultRollNumber = "CS2021001";
+      localStorage.setItem("rollNumber", defaultRollNumber);
+      setRollNumber(defaultRollNumber);
+    } else {
+      setRollNumber(storedRollNumber);
     }
-    
-    setRollNumber(storedRollNumber);
     
     const loadCourses = async () => {
       try {
         setLoading(true);
-        const data = await fetchStudentCourses(storedRollNumber);
+        // Use the roll number from state or the default/stored one
+        const student_roll = storedRollNumber || "CS2021001";
+        const data = await fetchStudentCourses(student_roll);
         setCourses(data);
+        // Store courses in localStorage for use in CourseDetail
+        localStorage.setItem("courses", JSON.stringify(data));
       } catch (err) {
         console.error("Failed to fetch courses:", err);
         setError("Failed to load courses. Please try again.");
@@ -57,6 +63,8 @@ const Dashboard = () => {
     try {
       const data = await fetchStudentCourses(rollNumber);
       setCourses(data);
+      // Update localStorage on refresh as well
+      localStorage.setItem("courses", JSON.stringify(data));
     } catch (err) {
       console.error("Failed to refresh courses:", err);
       setError("Failed to refresh courses. Please try again.");
