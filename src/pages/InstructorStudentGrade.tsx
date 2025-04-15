@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchComponentScores, fetchTotalScore, assignGrade } from "@/lib/api";
 import Header from "@/components/Header";
-import { ArrowLeft, Save, Award } from "lucide-react";
+import CourseScoreDisplay from "@/components/CourseScoreDisplay";
+import { ArrowLeft, Save, PenLine } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +20,13 @@ interface ComponentScore {
 }
 
 const formSchema = z.object({
-  grade: z.number().min(0, "Grade must be at least 0").max(10, "Grade must be at most 10")
+  componentScores: z.array(
+    z.object({
+      ComponentName: z.string(),
+      Percentage: z.number(),
+      Score: z.number().min(0, "Score must be at least 0").max(100, "Score must be at most 100")
+    })
+  )
 });
 
 const InstructorStudentGrade = () => {
@@ -38,12 +43,11 @@ const InstructorStudentGrade = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      grade: 0
+      componentScores: []
     }
   });
 
   useEffect(() => {
-    // Redirect to login if instructor ID is not present
     if (!instructorId || !rollNumber || !courseCode) {
       navigate("/");
       return;
@@ -58,7 +62,8 @@ const InstructorStudentGrade = () => {
         
         setComponents(componentsData);
         setTotalScore(totalScoreData);
-        form.setValue("grade", totalScoreData.grade);
+        
+        form.setValue("componentScores", componentsData);
       } catch (err) {
         setError("Failed to load student grade data");
         console.error(err);
@@ -79,24 +84,26 @@ const InstructorStudentGrade = () => {
     
     setSubmitting(true);
     try {
-      await assignGrade(instructorId, {
-        roll_number: rollNumber,
-        course_code: courseCode,
-        grade: values.grade
+      const updatedComponentScores = values.componentScores;
+      let newTotalScore = 0;
+      
+      updatedComponentScores.forEach(comp => {
+        newTotalScore += (comp.Score * comp.Percentage) / 100;
       });
+      
+      setComponents(updatedComponentScores);
+      
+      setTotalScore(prev => ({ ...prev, total_score: newTotalScore }));
       
       toast({
-        title: "Grade Updated",
-        description: `Successfully updated grade for student ${rollNumber}`,
+        title: "Scores Updated",
+        description: `Successfully updated component scores for student ${rollNumber}`,
         variant: "default"
       });
-      
-      // Update local state to reflect the change
-      setTotalScore(prev => ({ ...prev, grade: values.grade }));
     } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to update student grade",
+        description: "Failed to update component scores",
         variant: "destructive"
       });
       console.error(err);
@@ -119,118 +126,89 @@ const InstructorStudentGrade = () => {
           Back to Course
         </Button>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Student Performance</CardTitle>
-                <CardDescription>
-                  {rollNumber} in {courseCode}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="h-48 rounded-lg bg-gray-200 animate-pulse"></div>
-                ) : error ? (
-                  <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">
-                    {error}
+        <div className="grid grid-cols-1 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Performance</CardTitle>
+              <CardDescription>
+                {rollNumber} in {courseCode}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="h-48 rounded-lg bg-gray-200 animate-pulse"></div>
+              ) : error ? (
+                <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">
+                  {error}
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-4">Current Totals</h3>
+                    <CourseScoreDisplay totalScore={totalScore} />
                   </div>
-                ) : (
-                  <>
-                    <div className="mb-6">
-                      <h3 className="text-lg font-medium mb-2">Component Scores</h3>
-                      <div className="space-y-4">
-                        {components.map((component, index) => (
-                          <div key={index} className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{component.ComponentName}</p>
-                              <p className="text-sm text-gray-500">Weight: {component.Percentage}%</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">{component.Score}/100</p>
-                              <p className="text-sm text-gray-500">
-                                Weighted: {((component.Score * component.Percentage) / 100).toFixed(1)}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="pt-4 border-t">
-                      <div className="flex justify-between items-center">
-                        <p className="font-medium">Total Score:</p>
-                        <p className="font-medium">{totalScore.total_score.toFixed(1)}/100</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Award className="mr-2 h-5 w-5 text-yellow-500" />
-                  Assign Grade
-                </CardTitle>
-                <CardDescription>
-                  Update the final grade for this student
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="h-32 rounded-lg bg-gray-200 animate-pulse"></div>
-                ) : (
+                  
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      <FormField
-                        control={form.control}
-                        name="grade"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Final Grade (0-10)</FormLabel>
-                            <FormControl>
-                              <div className="space-y-4">
-                                <Slider
-                                  min={0}
-                                  max={10}
-                                  step={0.1}
-                                  value={[field.value]}
-                                  onValueChange={(value) => field.onChange(value[0])}
-                                />
-                                <div className="flex justify-between items-center">
-                                  <FormDescription>
-                                    Current Value: {field.value.toFixed(1)}
-                                  </FormDescription>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    max={10}
-                                    step={0.1}
-                                    className="w-20"
-                                    value={field.value}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                  />
-                                </div>
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="border-t pt-6">
+                        <h3 className="text-lg font-medium mb-4 flex items-center">
+                          <PenLine className="mr-2 h-5 w-5 text-blue-500" />
+                          Assign Component Scores
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Update the scores for each assessment component. The final grade will be calculated automatically.
+                        </p>
+                        
+                        <div className="space-y-4">
+                          {components.map((component, index) => (
+                            <FormField
+                              key={component.ComponentName}
+                              control={form.control}
+                              name={`componentScores.${index}.Score`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 border rounded-md bg-gray-50">
+                                    <div className="md:flex-1">
+                                      <FormLabel className="text-base">
+                                        {component.ComponentName}
+                                      </FormLabel>
+                                      <FormDescription>
+                                        Weight: {component.Percentage}%
+                                      </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          min={0}
+                                          max={100}
+                                          step={0.1}
+                                          className="w-24"
+                                          value={field.value}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        />
+                                        <span className="text-sm text-gray-500">/100</span>
+                                      </div>
+                                    </FormControl>
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      
                       <Button type="submit" className="w-full" disabled={submitting}>
-                        {submitting ? "Saving..." : "Save Grade"}
+                        {submitting ? "Saving..." : "Save Component Scores"}
                         <Save className="ml-2 h-4 w-4" />
                       </Button>
                     </form>
                   </Form>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

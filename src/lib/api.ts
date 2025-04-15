@@ -60,3 +60,19 @@ export const assignGrade = async (instructorId: string, data: { roll_number: str
   // Return success response instead of making an API call
   return { message: "Grade assigned successfully" };
 };
+
+// New function to update component scores
+export const updateComponentScores = async (
+  instructorId: string, 
+  data: { 
+    roll_number: string; 
+    course_code: string; 
+    component_scores: Array<{ComponentName: string; Score: number}>
+  }
+) => {
+  console.log(`Updating component scores for student ${data.roll_number} in course ${data.course_code} by instructor ${instructorId}`);
+  // In a real app, this would send the scores to the backend
+  // The backend would calculate the new grade using gaussian or linear logic
+  // Return success response instead of making an API call
+  return { message: "Component scores updated successfully" };
+};
